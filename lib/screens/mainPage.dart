@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zomato_clone_sample/bloc/home/home_bloc.dart';
+import 'package:zomato_clone_sample/connectivity/connectivityService.dart';
 import 'package:zomato_clone_sample/di/strings.dart';
 import 'package:zomato_clone_sample/screens/homePage.dart';
 import 'package:zomato_clone_sample/screens/invoicePage.dart';
@@ -11,10 +12,10 @@ import 'package:zomato_clone_sample/utils/sizeconfig.dart';
 import 'package:zomato_clone_sample/widgets/FancyTabs.dart';
 
 class MainPage extends StatefulWidget {
-  final bool isConnected;
   final ApiRepository apiRepository;
+  final NetworkProvider status;
 
-  MainPage({this.isConnected, this.apiRepository});
+  MainPage({this.apiRepository, this.status});
 
   @override
   _MainPageState createState() => _MainPageState();
@@ -24,9 +25,9 @@ class _MainPageState extends State<MainPage>
     with SingleTickerProviderStateMixin {
   HomeBloc homeBloc;
 
-  bool get _isConnected => widget.isConnected;
-
   ApiRepository get _apiRepository => widget.apiRepository;
+
+  NetworkProvider get _status=> widget.status;
 
   @override
   void initState() {
@@ -37,8 +38,8 @@ class _MainPageState extends State<MainPage>
   List<Widget> _getChildWidgets() {
     return <Widget>[
       HomePage(
-        isConnected: _isConnected,
         homeBloc: homeBloc,
+        status: _status,
       ),
       InvoicePage(),
       NotificationPage(),

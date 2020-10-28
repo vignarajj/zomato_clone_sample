@@ -7,7 +7,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:zomato_clone_sample/NavigationBloc.dart';
+import 'package:zomato_clone_sample/connectivity/connectivityService.dart';
 import 'package:zomato_clone_sample/di/constants.dart';
 import 'package:zomato_clone_sample/di/strings.dart';
 import 'package:zomato_clone_sample/screens/SplashPage.dart';
@@ -72,54 +74,62 @@ class _MyAppState extends State<MyApp> {
     return BlocProvider(
       create: (BuildContext context) =>
           NavigatorBloc(navigatorKey: _navigatorKey),
-      child: MaterialApp(
-          builder: (context, child) {
-            return MediaQuery(
-                data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
-                child: child);
+      child: Provider<NetworkProvider>(
+        create: (context)=> NetworkProvider(),
+        child: Consumer<NetworkProvider>(
+          builder: (context, status, _){
+            return MaterialApp(
+                builder: (context, child) {
+                  return MediaQuery(
+                      data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                      child: child);
+                },
+                navigatorKey: _navigatorKey,
+                title: Strings.appName,
+                theme: ThemeData(
+                  fontFamily: 'Roboto-Medium',
+                  visualDensity: VisualDensity.adaptivePlatformDensity,
+                ),
+                debugShowCheckedModeBanner: false,
+                home: SplashScreen(),
+                onGenerateRoute: (settings) {
+                  switch (settings.name) {
+                    case '/':
+                      return PageTransition(
+                          curve: Curves.easeInOut,
+                          child: SplashScreen(),
+                          type: PageTransitionType.rightToLeft);
+                      break;
+                    case mainScreen:
+                      return PageTransition(
+                          curve: Curves.easeInOut,
+                          child: MainPage(
+                            apiRepository: _apiRepository,
+                            status: status,
+                          ),
+                          type: PageTransitionType.rightToLeft);
+                      break;
+                    case detailsPage:
+                      return PageTransition(
+                          curve: Curves.easeInOut,
+                          child: DetailsPage(
+                            status: status,
+                            nearbyRestaurant: settings.arguments,
+                          ),
+                          type: PageTransitionType.rightToLeft);
+                      break;
+                    default:
+                      return PageTransition(
+                          curve: Curves.easeInOut,
+                          child: SplashScreen(),
+                          type: PageTransitionType.rightToLeft);
+                      break;
+                  }
+                });
           },
-          navigatorKey: _navigatorKey,
-          title: Strings.appName,
-          theme: ThemeData(
-            fontFamily: 'Roboto-Medium',
-            visualDensity: VisualDensity.adaptivePlatformDensity,
-          ),
-          debugShowCheckedModeBanner: false,
-          home: SplashScreen(),
-          onGenerateRoute: (settings) {
-            switch (settings.name) {
-              case '/':
-                return PageTransition(
-                    curve: Curves.easeInOut,
-                    child: SplashScreen(),
-                    type: PageTransitionType.rightToLeft);
-                break;
-              case mainScreen:
-                return PageTransition(
-                    curve: Curves.easeInOut,
-                    child: MainPage(
-                      apiRepository: _apiRepository,
-                      isConnected: isConnected,
-                    ),
-                    type: PageTransitionType.rightToLeft);
-                break;
-              case detailsPage:
-                return PageTransition(
-                    curve: Curves.easeInOut,
-                    child: DetailsPage(
-                      isConnected: isConnected,
-                      nearbyRestaurant: settings.arguments,
-                    ),
-                    type: PageTransitionType.rightToLeft);
-                break;
-              default:
-                return PageTransition(
-                    curve: Curves.easeInOut,
-                    child: SplashScreen(),
-                    type: PageTransitionType.rightToLeft);
-                break;
-            }
-          }),
+        ),
+      )
+
     );
   }
 }

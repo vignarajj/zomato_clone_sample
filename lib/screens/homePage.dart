@@ -1,3 +1,6 @@
+import 'dart:developer';
+
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,10 +8,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import 'package:zomato_clone_sample/NavigationBloc.dart';
+import 'package:zomato_clone_sample/bloc/home/home_actions.dart';
 import 'package:zomato_clone_sample/bloc/home/home_bloc.dart';
-import 'file:///E:/Flutter%20Workspaces/Flutter_samples/zomato_clone_sample/lib/bloc/home/home_actions.dart';
-import 'file:///E:/Flutter%20Workspaces/Flutter_samples/zomato_clone_sample/lib/bloc/home/home_state.dart';
+import 'package:zomato_clone_sample/bloc/home/home_state.dart';
+import 'package:zomato_clone_sample/connectivity/connectivityService.dart';
 import 'package:zomato_clone_sample/di/strings.dart';
 import 'package:zomato_clone_sample/models/GeoCodeResponse.dart';
 import 'package:zomato_clone_sample/styles/color.dart';
@@ -17,10 +22,10 @@ import 'package:zomato_clone_sample/utils/sizeconfig.dart';
 import 'package:zomato_clone_sample/widgets/textview.dart';
 
 class HomePage extends StatefulWidget {
-  final bool isConnected;
   final HomeBloc homeBloc;
+  final NetworkProvider status;
 
-  HomePage({this.isConnected, this.homeBloc});
+  HomePage({this.homeBloc, this.status});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -33,16 +38,18 @@ class _HomePageState extends State<HomePage> {
 
   HomeBloc get _homeBloc => widget.homeBloc;
 
-  bool get _isConnected => widget.isConnected;
+  NetworkProvider get status => widget.status;
 
   @override
   void initState() {
     super.initState();
-    if (_isConnected) {
-      checkPermission();
-    } else {
-      _homeBloc.add(HomeInitiated(isConnected: false));
-    }
+    ConnectivityService().check().then((value) {
+      if (value != null && value) {
+        checkPermission();
+      } else {
+        _homeBloc.add(HomeInitiated(isConnected: false));
+      }
+    });
   }
 
   void _onWidgetDidBuild(Function callback) {
@@ -89,17 +96,17 @@ class _HomePageState extends State<HomePage> {
             "${position.latitude} , ${position.longitude}";
         print("currentLocation $_locationMessage");
         _homeBloc.add(HomeInitiated(
-            isConnected: _isConnected,
+            isConnected: true,
             latitude: position.latitude,
             longitude: position.longitude));
       });
     } else {
       if (lastPosition != null) {
         _homeBloc.add(HomeInitiated(
-            isConnected: _isConnected,
+            isConnected: true,
             latitude: lastPosition.latitude,
             longitude: lastPosition.longitude));
-      }else{
+      } else {
         Fluttertoast.showToast(msg: Strings.locationError);
       }
     }
@@ -128,94 +135,107 @@ class _HomePageState extends State<HomePage> {
               }
             });
           }
-          return Scaffold(
-            backgroundColor: Colors.white,
-            body: SingleChildScrollView(
-              child: state is HomeLoading
-                  ? Container(
-                      height: SizeConfig.screenHeight,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          backgroundColor: AppColors.colorLightGray,
-                        ),
-                      ),
-                    )
-                  : Container(
-                      child: Column(
-                        children: [
-                          //title
-                          Container(
-                            margin: EdgeInsets.only(left: 10, top: 20),
-                            child: Align(
-                              alignment: Alignment.topLeft,
-                              child: TextMedium(
-                                text: Strings.foodDelivery,
-                                textColor: Colors.black,
-                                textSize: SizeConfig.xlarge,
-                              ),
+          return StreamProvider<ConnectivityResult>.value(
+            value: status.networkStatusController.stream,
+            child: Consumer<ConnectivityResult>(builder: (context, value, _) {
+              bool _isConnected =
+                  value == ConnectivityResult.none ? false : true;
+              return Scaffold(
+                backgroundColor: Colors.white,
+                body: SingleChildScrollView(
+                  child: state is HomeLoading
+                      ? Container(
+                          height: SizeConfig.screenHeight,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              backgroundColor: AppColors.colorLightGray,
                             ),
                           ),
-                          //tagged list
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 5.0, vertical: 25.0),
-                            height: MediaQuery.of(context).size.height * 0.15,
-                            child: (topCuisines != null &&
-                                    topCuisines.length > 0)
-                                ? ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: topCuisines.length,
-                                    itemBuilder:
-                                        (BuildContext context, int index) {
-                                      return Container(
-                                        margin:
-                                            const EdgeInsets.only(right: 10),
-                                        child: MaterialButton(
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(40.0)),
-                                          onPressed: () {},
-                                          color: AppColors.colorPrimary,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(5.0),
-                                            child: TextRegular(
-                                              textColor: Colors.white,
-                                              text: topCuisines[index],
-                                              textSize: SizeConfig.small,
+                        )
+                      : Container(
+                          child: Column(
+                            children: [
+                              //title
+                              Container(
+                                margin: EdgeInsets.only(left: 10, top: 20),
+                                child: Align(
+                                  alignment: Alignment.topLeft,
+                                  child: TextMedium(
+                                    text: Strings.foodDelivery,
+                                    textColor: Colors.black,
+                                    textSize: SizeConfig.xlarge,
+                                  ),
+                                ),
+                              ),
+                              //tagged list
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 5.0, vertical: 25.0),
+                                height:
+                                    MediaQuery.of(context).size.height * 0.15,
+                                child: (topCuisines != null &&
+                                        topCuisines.length > 0)
+                                    ? ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: topCuisines.length,
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                          return Container(
+                                            margin: const EdgeInsets.only(
+                                                right: 10),
+                                            child: MaterialButton(
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          40.0)),
+                                              onPressed: () {},
+                                              color: AppColors.colorPrimary,
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(5.0),
+                                                child: TextRegular(
+                                                  textColor: Colors.white,
+                                                  text: topCuisines[index],
+                                                  textSize: SizeConfig.small,
+                                                ),
+                                              ),
                                             ),
-                                          ),
-                                        ),
-                                      );
-                                    })
-                                : Container(),
-                          ),
-                          // near by label
-                          Container(
-                            margin: EdgeInsets.only(left: 10, top: 5),
-                            child: Align(
-                              alignment: Alignment.topLeft,
-                              child: TextBold(
-                                text: Strings.nearBy,
-                                textSize: SizeConfig.medium,
-                                textColor: Colors.black,
+                                          );
+                                        })
+                                    : Container(),
                               ),
-                            ),
+                              // near by label
+                              Container(
+                                margin: EdgeInsets.only(left: 10, top: 5),
+                                child: Align(
+                                  alignment: Alignment.topLeft,
+                                  child: TextBold(
+                                    text: Strings.nearBy,
+                                    textSize: SizeConfig.medium,
+                                    textColor: Colors.black,
+                                  ),
+                                ),
+                              ),
+                              //near by list
+                              Container(
+                                // padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+                                margin: EdgeInsets.only(
+                                  top: 10,
+                                  bottom: 10,
+                                ),
+                                height: 250,
+                                child: ListContainer(
+                                  homeBloc: _homeBloc,
+                                  nearbyRestaurant: nearByList,
+                                  isConnected: _isConnected,
+                                ),
+                              )
+                            ],
                           ),
-                          //near by list
-                          Container(
-                            // padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
-                            margin: EdgeInsets.only(top: 10, bottom: 10,),
-                            height: 250,
-                            child: ListContainer(
-                              homeBloc: _homeBloc,
-                              nearbyRestaurant: nearByList,
-                              isConnected: _isConnected,
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-            ),
+                        ),
+                ),
+              );
+            }),
           );
         });
   }
@@ -223,13 +243,11 @@ class _HomePageState extends State<HomePage> {
 
 class ListContainer extends StatefulWidget {
   final HomeBloc homeBloc;
-  final bool isConnected;
   final List<NearbyRestaurant> nearbyRestaurant;
+  final bool isConnected;
+  final NetworkProvider status;
 
-  ListContainer(
-      {this.homeBloc,
-      this.isConnected,
-      this.nearbyRestaurant});
+  ListContainer({this.homeBloc, this.nearbyRestaurant, this.isConnected, this.status});
 
   @override
   _ListContainerState createState() => _ListContainerState();
@@ -252,10 +270,10 @@ class _ListContainerState extends State<ListContainer> {
             itemBuilder: (BuildContext context, int index) {
               NearbyRestaurant restaurant = _nearByRestaurants[index];
               return GestureDetector(
-                onTap: (){
+                onTap: () {
                   _homeBloc.add(ViewDetails());
-                  BlocProvider.of<NavigatorBloc>(context).add(
-                      NavigateToDetails(nearbyRestaurant: restaurant));
+                  BlocProvider.of<NavigatorBloc>(context)
+                      .add(NavigateToDetails(nearbyRestaurant: restaurant));
                 },
                 child: Container(
                   width: 210,

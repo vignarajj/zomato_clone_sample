@@ -1,11 +1,9 @@
 import 'dart:convert';
-import 'dart:developer';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
-import 'file:///E:/Flutter%20Workspaces/Flutter_samples/zomato_clone_sample/lib/bloc/home/home_actions.dart';
-import 'file:///E:/Flutter%20Workspaces/Flutter_samples/zomato_clone_sample/lib/bloc/home/home_state.dart';
+import 'package:zomato_clone_sample/bloc/home/home_actions.dart';
+import 'package:zomato_clone_sample/bloc/home/home_state.dart';
 import 'package:zomato_clone_sample/models/GeoCodeResponse.dart';
 import 'package:zomato_clone_sample/services/api_repository.dart';
 
