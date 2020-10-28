@@ -1,17 +1,22 @@
-# zomato_clone_sample
+# Zomato Clone Sample
 
-It's Zomato clone sample app.
+It's Zomato clone app using BLOC.
 
-## Getting Started
+Download your own user key from the zomato.
 
-This project is a starting point for a Flutter application.
+# Features:
+1. BLOC architecture.
+2. Connectivity.
+3. Awesome left hand side menu view.
+4. Sliver App bar view.
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+# Splash page
+<img src="https://github.com/vignarajj/zomato_clone_sample/blob/master/Screenshot_1603373907.png?raw=true" width="480" height="800"/>
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# Main page
+<img src="https://github.com/vignarajj/zomato_clone_sample/blob/master/Screenshot_1603373916.png?raw=true" width="480" height="800"/>
+
+# Details page
+<img src="https://github.com/vignarajj/zomato_clone_sample/blob/master/Screenshot_1603373923.png?raw=true" width="480" height="800"/>
 
